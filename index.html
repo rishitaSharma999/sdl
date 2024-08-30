@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frequency Display</title>
+<style>
+/* Global Styles */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  color: #a9a7a7;
+  background-color: #1f1d1d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Table Styles */
+
+#frequency-table {
+  margin: 20px auto;
+  width: 50%;
+  border-collapse: collapse;
+  box-shadow: 0 0 10px rgba(236, 220, 220, 0.1);
+}
+
+#frequency-table th,
+#frequency-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+#frequency-table th {
+  background-color: #4CAF50;
+  color: #fff;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+#frequency-table tr:hover {
+  background-color: #424243;
+}
+
+/* Button Styles */
+
+button {
+  background-color: #4c84af;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+button:hover {
+  background-color: #81b2cc;
+}
+
+/* Input Styles */
+
+input[type="file"] {
+  padding: 10px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+}
+
+input[type="file"]:hover {
+  background-color: #f2f2f2;
+}
+
+/* Custom File Input Styles */
+
+.custom-file-input {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.custom-file-input input[type="file"] {
+  display: none;
+}
+
+.custom-file-input label {
+  background-color: #3daff1;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.custom-file-input label:hover {
+  background-color: #8fc2ee;
+}
+
+/* Button Container Styles */
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.button-container button {
+  margin: 0 10px;
+}
+</style>
+</head>
+<body>
+
+  <div class="custom-file-input">
+    <input type="file" id="pdf-input" accept=".pdf">
+    <label for="pdf-input">Choose a PDF file</label>
+  </div>
+  <div class="button-container">
+    <button id="upload-button">Upload the pdf</button>
+    <button id="fetch-button">Fetch</button>
+  </div>
+  <table id="frequency-table">
+    <tr>
+      <th>Teacher</th>
+      <th>Load</th>
+    </tr>
+  </table>
+
+<script>
+  document.getElementById('upload-button').addEventListener('click', function() {
+    const fileInput = document.getElementById('pdf-input');
+    if (fileInput.files.length > 0) {
+      console.log('File selected:', fileInput.files[0]);
+      const formData = new FormData();
+      formData.append('File', fileInput.files[0]);
+
+      fetch('http://localhost:7000/extract-text', {
+        method: 'POST',
+        body: formData,
+      })
+      .then(response => {
+        console.log('Response:', response);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Data received:', data);
+        const table = document.getElementById('frequency-table');
+        // Clear existing rows
+        while (table.rows.length > 1) {
+          table.deleteRow(1);
+        }
+        // Add new rows with frequencies
+        for (const [char, freq] of Object.entries(data.frequencies)) {
+          const row = table.insertRow();
+          const charCell = row.insertCell(0);
+          const freqCell = row.insertCell(1);
+          charCell.innerHTML = char;
+          freqCell.innerHTML = freq;
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        
+      });
+    } else {
+      alert('Please select a PDF file to upload.');
+    }
+  });
+
+  document.getElementById('fetch-button').addEventListener('click', function() {
+    fetch('http://localhost:7000/get-frequencies')
+      .then(response => {
+        console.log('Response:', response);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Data received:', data);
+        const table = document.getElementById('frequency-table');
+        // Clear existing rows
+        while (table.rows.length > 1) {
+          table.deleteRow(1);
+        }
+        // Add new rows with frequencies
+        for (const [char, freq] of Object.entries(data)) {
+          const row = table.insertRow();
+          const charCell = row.insertCell(0);
+          const freqCell = row.insertCell(1);
+          charCell.innerHTML = char;
+          freqCell.innerHTML = freq;
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        
+      });
+  });
+</script>
+
+</body>
+</html>

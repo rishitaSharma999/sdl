@@ -66,8 +66,8 @@ app.post('/extract-text', upload.single('File'), async (req, res) => {
 
     // Initial setup, create credentials instance
     const credentials = new ServicePrincipalCredentials({
-      clientId: 'd8ac4256d50c48f9a66650bee6f95acf',
-      clientSecret: 'p8e-KWUxu2lR5gKjSJhLdU8AwQLY4F5tdH0r'
+      clientId: process.env.ADOBE_CLIENT_ID,
+      clientSecret: process.env.ADOBE_CLIENT_SECRET
     });
 
     // Creates a PDF Services instance

@@ -2,7 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const app = express();
 const cors = require('cors');
-require('dotenv').config();
+require('dotenv').config({
+  path: './.env',
+  ignore: ['ADOBE_CLIENT_SECRET'],
+});
 
 app.use(cors({
   origin: 'http://127.0.0.1:5500', // Adjust this to your frontend's origin

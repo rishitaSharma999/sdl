@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const app = express();
 const cors = require('cors');
+require('dotenv').config();
 
 app.use(cors({
   origin: 'http://127.0.0.1:5500', // Adjust this to your frontend's origin
@@ -67,7 +68,7 @@ app.post('/extract-text', upload.single('File'), async (req, res) => {
     // Initial setup, create credentials instance
     const credentials = new ServicePrincipalCredentials({
       clientId: process.env.ADOBE_CLIENT_ID,
-      clientSecret: process.env.ADOBE_CLIENT_SECRET
+      clientSecret: process.env.ADOBE_CLIENT_SECRET,
     });
 
     // Creates a PDF Services instance

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Frequency Display</title>
 <style>
-/* Global Styles */
+
 
 * {
   box-sizing: border-box;
@@ -50,7 +50,34 @@ body {
 #frequency-table tr:hover {
   background-color: #424243;
 }
+#spinner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  border-radius: 10px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 /* Button Styles */
 
 button {
@@ -132,87 +159,96 @@ input[type="file"]:hover {
     <button id="upload-button">Upload the pdf</button>
     <button id="fetch-button">Fetch</button>
   </div>
+  <div id="spinner" style="display: none;">
+    <div class="spinner"></div>
+    <span>Loading...</span>
+  </div>
   <table id="frequency-table">
     <tr>
       <th>Teacher</th>
-      <th>Load</th>
+      <th>Load-In Hours</th>
     </tr>
   </table>
 
 <script>
+  
   document.getElementById('upload-button').addEventListener('click', function() {
-    const fileInput = document.getElementById('pdf-input');
-    if (fileInput.files.length > 0) {
-      console.log('File selected:', fileInput.files[0]);
-      const formData = new FormData();
-      formData.append('File', fileInput.files[0]);
+            const fileInput = document.getElementById('pdf-input');
+            if (fileInput.files.length > 0) {
+                const formData = new FormData();
+                formData.append('File', fileInput.files[0]);
 
-      fetch('http://localhost:7000/extract-text', {
-        method: 'POST',
-        body: formData,
-      })
-      .then(response => {
-        console.log('Response:', response);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Data received:', data);
-        const table = document.getElementById('frequency-table');
-        // Clear existing rows
-        while (table.rows.length > 1) {
-          table.deleteRow(1);
-        }
-        // Add new rows with frequencies
-        for (const [char, freq] of Object.entries(data.frequencies)) {
-          const row = table.insertRow();
-          const charCell = row.insertCell(0);
-          const freqCell = row.insertCell(1);
-          charCell.innerHTML = char;
-          freqCell.innerHTML = freq;
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        
-      });
-    } else {
-      alert('Please select a PDF file to upload.');
-    }
-  });
+                document.getElementById('spinner').style.display = 'block';
+                const startTime = Date.now();
 
-  document.getElementById('fetch-button').addEventListener('click', function() {
-    fetch('http://localhost:7000/get-frequencies')
-      .then(response => {
-        console.log('Response:', response);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Data received:', data);
-        const table = document.getElementById('frequency-table');
-        // Clear existing rows
-        while (table.rows.length > 1) {
-          table.deleteRow(1);
-        }
-        // Add new rows with frequencies
-        for (const [char, freq] of Object.entries(data)) {
-          const row = table.insertRow();
-          const charCell = row.insertCell(0);
-          const freqCell = row.insertCell(1);
-          charCell.innerHTML = char;
-          freqCell.innerHTML = freq;
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        
-      });
-  });
+                fetch('http://localhost:7000/extract-text', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const table = document.getElementById('frequency-table');
+                    while (table.rows.length > 1) {
+                        table.deleteRow(1);
+                    }
+                    for (const [char, freq] of Object.entries(data.frequencies)) {
+                        const row = table.insertRow();
+                        const charCell = row.insertCell(0);
+                        const freqCell = row.insertCell(1);
+                        charCell.innerHTML = char;
+                        freqCell.innerHTML = freq;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    const elapsedTime = Date.now() - startTime;
+                    const remainingTime = Math.max(10000 - elapsedTime, 0);
+                    setTimeout(() => {
+                        document.getElementById('spinner').style.display = 'none';
+                    }, remainingTime);
+                });
+            } else {
+                alert('Please select a PDF file to upload.');
+            }
+        });
+
+        document.getElementById('fetch-button').addEventListener('click', function() {
+            document.getElementById('spinner').style.display = 'block';
+
+            fetch('http://localhost:7000/get-frequencies')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const table = document.getElementById('frequency-table');
+                    while (table.rows.length > 1) {
+                        table.deleteRow(1);
+                    }
+                    for (const [char, freq] of Object.entries(data)) {
+                        const row = table.insertRow();
+                        const charCell = row.insertCell(0);
+                        const freqCell = row.insertCell(1);
+                        charCell.innerHTML = char;
+                        freqCell.innerHTML = freq;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    document.getElementById('spinner').style.display = 'none';
+                });
+        });
 </script>
 
 </body>

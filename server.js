@@ -34,24 +34,26 @@ const upload = multer({ dest: 'uploads/' });
 
 function calculateFrequencies(texts) {
   const frequencies = {
-    'A ': 0,
-    'B ': 0,
-    'C ': 0,
-    'D ': 0,
-    'E ': 0,
-    'F ': 0,
-    'G ': 0
+    'VT': -1,
+    'AP': -1,
+    'SG': -1,
+    'RKD': -1,
+    'NM': -1,
+    'PK': -1,
+    'MG': -1,
+    'RP': -1,
+    'SM': -1
   };
 
-  texts.forEach(text => {
-    Object.keys(frequencies).forEach(char => {
-      // Use regex to match the character at the start of the string or after a space
-      const regex = new RegExp(`(^|\\s)${char}`, 'g');
-      const matches = text.match(regex);
-      if (matches) {
-        frequencies[char] += matches.length;
-      }
-    });
+  const combinedText = texts.join(' ');
+  
+  Object.keys(frequencies).forEach(initial => {
+    // Use regex to match the initials, allowing for 'o' after 'PK' and ignoring case
+    const regex = new RegExp(`\\b${initial}o?\\b`, 'gi');
+    const matches = combinedText.match(regex);
+    if (matches) {
+      frequencies[initial] = matches.length;
+    }
   });
 
   return frequencies;
